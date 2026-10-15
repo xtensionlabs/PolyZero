@@ -8,7 +8,7 @@ for ep in range(n):
     o = env.reset(); d = False; path = []
     while not d:
         with torch.no_grad(): lg, _ = net(torch.tensor(o)[None])
-        a = torch.distributions.Categorical(logits=lg).sample().item()
+        a = lg.argmax().item() if os.environ.get('GREEDY') else torch.distributions.Categorical(logits=lg).sample().item()
         o, r, d, info = env.step(a)
         if env.t % 100 == 0: path.append([round(x) for x in env.state['pos']])
     print(f"ep{ep} cp={info['cp']} fin={info['finished']} t={info['frames']/1000:.1f}s end={[round(x) for x in env.state['pos']]} v={env.state['speedKmh']:.0f}", 'path', path[:14])

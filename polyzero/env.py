@@ -24,7 +24,7 @@ class PolyTrackEnv:
                                      stdout=subprocess.PIPE, text=True, cwd=ROOT, bufsize=1)
         self.tpa, self.max_steps = ticks_per_action, int(max_seconds * 1000 / ticks_per_action)
         r = self._rpc({"cmd": "load", "capture": os.path.join(ROOT, capture)}); self.targets = r["targets"]
-        self.nav = NavField(r["cells"], self.targets)
+        self.parts = r["cells"]; self.nav = NavField(self.parts, self.targets)
         self.tp = np.array([t["p"] for t in self.targets])
         self.n_actions = len(ACTIONS); self.stuck_steps = int(stuck_seconds * 1000 / ticks_per_action)
 
@@ -82,8 +82,7 @@ class PolyTrackEnv:
         r -= 0.02                                     # time pressure
         r -= 0.5 * min(st["maxImpulse"] / 50.0, 2.0)  # collisions
         up_y = 1 - 2 * (st["quat"][0] ** 2 + st["quat"][2] ** 2)
-        flipped = up_y < 0.2
-        if flipped: r -= 5.0
+        flipped = False  # airborne pitch is normal; stuck detector handles upside-down cars
         if d < self.best_d - 1.0 or st["nextCp"] > self.prev_cp: self.best_d, self.best_t = d, self.t
         if st["nextCp"] > self.prev_cp: self.best_d = d
         stuck = self.t - self.best_t > self.stuck_steps
